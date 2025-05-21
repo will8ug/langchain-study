@@ -2,7 +2,7 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-from deepseek import DeepSeekAPI
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -34,23 +34,29 @@ def get_weather(city: str) -> str:
         return f"Error: {str(e)}"
 
 def main():
-    # Initialize DeepSeek client
-    client = DeepSeekAPI(api_key=os.getenv("DEEPSEEK_API_KEY"))
+    # Initialize OpenAI client with DeepSeek's base URL
+    client = OpenAI(
+        api_key=os.getenv("DEEPSEEK_API_KEY"),
+        base_url="https://api.deepseek.com"
+    )
     
-    # Define available functions
-    functions = [
+    # Define available tools
+    tools = [
         {
-            "name": "get_weather",
-            "description": "Get the current weather for a city",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "city": {
-                        "type": "string",
-                        "description": "The city name to get weather for"
-                    }
-                },
-                "required": ["city"]
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "Get the current weather for a city",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "description": "The city name to get weather for"
+                        }
+                    },
+                    "required": ["city"]
+                }
             }
         }
     ]
@@ -61,23 +67,42 @@ def main():
     ]
     
     # Get response from DeepSeek with function calling
-    response = client.chat_completion(
+    response = client.chat.completions.create(
+        model="deepseek-chat",
         messages=messages,
-        functions=functions,
-        function_call="auto"
+        tools=tools,
+        tool_choice="auto"
     )
-    print(response)
     
     # Process the response
-    if response.get("function_call"):
-        function_name = response["function_call"]["name"]
-        function_args = json.loads(response["function_call"]["arguments"])
+    message = response.choices[0].message
+    print(f"Model response: {message}")
+    
+    if message.tool_calls:
+        tool_call = message.tool_calls[0]
+        function_name = tool_call.function.name
+        function_args = json.loads(tool_call.function.arguments)
         
         if function_name == "get_weather":
             result = get_weather(function_args["city"])
-            print(result)
+            print(f"Weather result: {result}")
+            
+            # Add the function result to messages and get final response
+            messages.append(message)
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": result
+            })
+            
+            final_response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=messages,
+                tools=tools
+            )
+            print(f"Final response: {final_response.choices[0].message.content}")
     else:
-        print(response["content"])
+        print(f"Direct response: {message.content}")
 
 if __name__ == "__main__":
     main()

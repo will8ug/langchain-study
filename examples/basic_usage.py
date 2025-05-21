@@ -1,20 +1,29 @@
 import os
 from dotenv import load_dotenv
-from deepseek import DeepSeekAPI
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
 
 def main():
-    # Initialize DeepSeek client
-    client = DeepSeekAPI(api_key=os.getenv("DEEPSEEK_API_KEY"))
+    # Initialize OpenAI client with DeepSeek's base URL
+    client = OpenAI(
+        api_key=os.getenv("DEEPSEEK_API_KEY"),
+        base_url="https://api.deepseek.com"
+    )
     
     # Example: Generate text
-    prompt = "Write a short poem about artificial intelligence."
-    response = client.chat_completion(prompt)
+    messages = [
+        {"role": "user", "content": "Write a short poem about artificial intelligence."}
+    ]
+    
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=messages
+    )
     
     print("Generated Text:")
-    print(response)
+    print(response.choices[0].message.content)
 
 if __name__ == "__main__":
     main() 
