@@ -1,7 +1,7 @@
 import unittest
 import os
 from dotenv import load_dotenv
-from main import get_weather
+from raw_function_play import get_weather
 
 class TestWeatherIntegration(unittest.TestCase):
     @classmethod

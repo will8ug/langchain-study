@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 import os
-from main import get_weather
+from raw_function_play import get_weather
 
 class TestWeatherFunction(unittest.TestCase):
     def setUp(self):
