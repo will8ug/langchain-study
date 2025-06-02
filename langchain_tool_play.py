@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from langchain_deepseek import ChatDeepSeek
 from langchain_core.tools import tool
-from examples.raw_function_play import get_weather
+from tools.tools_weather import get_weather
 from pydantic import BaseModel, Field
 
 class GetWeather(BaseModel):
@@ -19,7 +19,7 @@ def main():
     
     # Initialize DeepSeek chat model
     chat = ChatDeepSeek(
-        api_key=os.getenv("DEEPSEEK_API_KEY"),
+        # api_key=os.getenv("DEEPSEEK_API_KEY"),
         model="deepseek-chat"
     )
     
